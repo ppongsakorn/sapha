@@ -1,0 +1,607 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sapha Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout: one clean reading column (max 1180px) · every participant type owns one color, used identically in the legend, all three diagrams and the stack table */
+:root{
+  --bg:#FAFAFD; --surface:#FFFFFF; --surface-2:#F4F3FA;
+  --line:#E8E7F2; --line-strong:#C9C7DD;
+  --text:#17152B; --muted:#5D5A78; --faint:#8C89A6;
+  --violet:#7C5CFF; --violet-ink:#5B3FD6; --violet-soft:#F3F0FF; --violet-line:#D9D0FF;
+  --sky:#0EA5E9; --sky-ink:#0369A1; --sky-soft:#ECF8FE;
+  --teal:#14B8A6; --teal-ink:#0F766E; --teal-soft:#EAFBF8; --teal-line:#A7EBE2;
+  --pink:#EC4899; --pink-ink:#BE185D; --pink-soft:#FDF0F7;
+  --amber:#F59E0B; --amber-ink:#B45309; --amber-soft:#FFF7E6;
+  --green:#22C55E; --green-ink:#15803D; --green-soft:#EEFBF2; --green-line:#B4EBC7;
+  --display:'Anuphan','IBM Plex Sans Thai',system-ui,sans-serif;
+  --font:'IBM Plex Sans Thai','Anuphan',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r:14px; --r-pill:999px;
+  --fs-xs:.75rem; --fs-sm:.8125rem; --fs-base:.9375rem; --fs-md:1.0625rem; --fs-lg:1.375rem; --fs-xl:1.875rem; --fs-2xl:2.75rem;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E0D18; --surface:#171629; --surface-2:#1D1C33;
+    --line:#2A2843; --line-strong:#45426A;
+    --text:#F2F1FA; --muted:#ABA8C6; --faint:#7E7B9C;
+    --violet:#9B85FF; --violet-ink:#B9A9FF; --violet-soft:#1F1B3D; --violet-line:#3E3570;
+    --sky:#38BDF8; --sky-ink:#7DD3FC; --sky-soft:#0F2533;
+    --teal:#2DD4BF; --teal-ink:#5EEAD4; --teal-soft:#0E2A29; --teal-line:#1F5A54;
+    --pink:#F472B6; --pink-ink:#F9A8D4; --pink-soft:#2E1426;
+    --amber:#FBBF24; --amber-ink:#FCD34D; --amber-soft:#2E2310;
+    --green:#4ADE80; --green-ink:#86EFAC; --green-soft:#102A1A; --green-line:#1F5A35;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E0D18; --surface:#171629; --surface-2:#1D1C33;
+  --line:#2A2843; --line-strong:#45426A;
+  --text:#F2F1FA; --muted:#ABA8C6; --faint:#7E7B9C;
+  --violet:#9B85FF; --violet-ink:#B9A9FF; --violet-soft:#1F1B3D; --violet-line:#3E3570;
+  --sky:#38BDF8; --sky-ink:#7DD3FC; --sky-soft:#0F2533;
+  --teal:#2DD4BF; --teal-ink:#5EEAD4; --teal-soft:#0E2A29; --teal-line:#1F5A54;
+  --pink:#F472B6; --pink-ink:#F9A8D4; --pink-soft:#2E1426;
+  --amber:#FBBF24; --amber-ink:#FCD34D; --amber-soft:#2E2310;
+  --green:#4ADE80; --green-ink:#86EFAC; --green-soft:#102A1A; --green-line:#1F5A35;
+  color-scheme:dark;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+img{max-width:100%}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);font-size:var(--fs-base);line-height:1.75}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+code{font-family:var(--mono);font-size:.9em}
+h1,h2,.mark{font-family:var(--display)}
+h1 .th{display:block;margin-top:6px;font-size:var(--fs-lg);font-weight:600;letter-spacing:0;color:var(--violet-ink)}
+
+/* header: wordmark + one dot per participant color */
+.top{border-bottom:1px solid var(--line);background:var(--surface)}
+.top-in{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding-block:16px}
+.mark{display:flex;align-items:center;gap:10px;font-weight:700;font-size:var(--fs-md);letter-spacing:-.01em}
+.dots{display:inline-flex;gap:4px}
+.dots i{width:9px;height:9px;border-radius:50%;display:block}
+.status{margin-left:auto;font-size:var(--fs-xs);font-weight:600;color:var(--amber-ink);background:var(--amber-soft);border:1px solid var(--amber);padding:2px 12px;border-radius:var(--r-pill)}
+
+.eyebrow{margin:0;display:flex;align-items:center;gap:8px;font-size:var(--fs-xs);font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--violet-ink)}
+.eyebrow::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--violet)}
+
+.intro{padding-block:40px 6px;display:grid;gap:14px}
+h1{margin:0;font-size:var(--fs-2xl);font-weight:700;letter-spacing:-.025em;line-height:1.1;text-wrap:balance}
+.lede{margin:0;max-width:62ch;color:var(--muted);font-size:var(--fs-md)}
+
+.facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:8px}
+.fact{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;display:grid;gap:4px;align-content:start}
+.fact b{font-family:var(--display);font-size:var(--fs-xl);font-weight:700;letter-spacing:-.02em;line-height:1.2;font-variant-numeric:tabular-nums}
+.fact span{color:var(--muted);font-size:var(--fs-sm);line-height:1.6}
+.fact i{font-style:normal;justify-self:start;margin-top:6px;font-size:var(--fs-xs);font-weight:600;padding:1px 10px;border-radius:var(--r-pill);border:1px solid}
+.f-amber b{color:var(--amber-ink)} .f-violet b{color:var(--violet-ink)} .f-pink b{color:var(--pink-ink)}
+.tag-measured{color:var(--green-ink);background:var(--green-soft);border-color:var(--green-line)}
+.tag-est{color:var(--amber-ink);background:var(--amber-soft);border-color:var(--amber)}
+.note{margin:2px 0 0;color:var(--faint);font-size:var(--fs-xs)}
+
+/* shared color key */
+.key{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.key span{display:inline-flex;align-items:center;gap:8px;font-size:var(--fs-xs);font-weight:500;color:var(--text);background:var(--surface);border:1px solid var(--line);padding:4px 12px 4px 8px;border-radius:var(--r-pill)}
+.key b{width:14px;height:14px;border-radius:5px;border:2px solid;display:block}
+.k1{background:var(--sky-soft);border-color:var(--sky)!important}
+.k2{background:var(--teal-soft);border-color:var(--teal)!important}
+.k3{background:var(--violet-soft);border-color:var(--violet)!important}
+.k4{background:var(--amber-soft);border-color:var(--amber)!important}
+.k5{background:var(--pink-soft);border-color:var(--pink)!important}
+.k6{background:var(--green-soft);border-color:var(--green)!important}
+.k7{background:transparent;border-color:var(--faint)!important;border-style:dashed!important}
+
+section.block{padding-block:44px 4px;display:grid;gap:14px}
+h2{margin:0;font-size:var(--fs-lg);font-weight:700;letter-spacing:-.015em;text-wrap:balance}
+.sub{margin:0;max-width:72ch;color:var(--muted)}
+
+figure.fig{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+figure.fig .scroll > svg{display:block;width:100%;min-width:960px;height:auto;padding:18px}
+figcaption{border-top:1px solid var(--line);padding:12px 18px;color:var(--muted);font-size:var(--fs-sm);line-height:1.7}
+
+/* diagram classes: each kind of thing has one color */
+.dg text{font-family:var(--font)}
+.dg .h{fill:var(--text);font-size:.9375rem;font-weight:600}
+.dg .t{fill:var(--text);font-size:.8125rem;font-weight:600}
+.dg .s{fill:var(--muted);font-size:.75rem}
+.dg .l{fill:var(--muted);font-size:.71875rem;paint-order:stroke;stroke:var(--surface);stroke-width:4px;stroke-linejoin:round}
+.dg .lg{fill:var(--pink-ink);font-weight:600}
+.dg .cap{font-size:.75rem;font-weight:600;letter-spacing:.06em}
+.dg .cap-people{fill:var(--sky-ink)} .dg .cap-ext{fill:var(--teal-ink)} .dg .cap-ai{fill:var(--pink-ink)} .dg .cap-hub{fill:var(--violet-ink)}
+.dg .mono{font-family:var(--mono);fill:var(--text);font-size:.75rem}
+.dg .tm{font-family:var(--mono);fill:var(--green-ink);font-size:.71875rem}
+.dg .tv{font-family:var(--mono);fill:var(--violet-ink);font-size:.71875rem}
+.dg .k-people{fill:var(--sky-soft);stroke:var(--sky);stroke-width:1.5}
+.dg .k-ext{fill:var(--teal-soft);stroke:var(--teal);stroke-width:1.5}
+.dg .k-band{fill:var(--surface);stroke:var(--teal-line);stroke-width:1.2}
+.dg .k-hub{fill:var(--violet-soft);stroke:var(--violet);stroke-width:1.6}
+.dg .k-app{fill:var(--surface);stroke:var(--violet);stroke-width:1.5}
+.dg .k-bar{fill:var(--surface);stroke:var(--violet-line);stroke-width:1.2}
+.dg .k-hot{fill:var(--amber-soft);stroke:var(--amber);stroke-width:1.5}
+.dg .k-ai{fill:var(--pink-soft);stroke:var(--pink);stroke-width:1.5}
+.dg .k-box{fill:var(--surface);stroke:var(--line-strong);stroke-width:1.2}
+.dg .k-db{fill:var(--green-soft);stroke:var(--green);stroke-width:1.6}
+.dg .k-tbl{fill:var(--surface);stroke:var(--green-line);stroke-width:1.2}
+.dg .k-tbd{fill:var(--surface);stroke:var(--faint);stroke-width:1.3;stroke-dasharray:5 4}
+.dg .k-pill{fill:var(--amber-soft);stroke:var(--amber)}
+.dg .pillt{fill:var(--amber-ink);font-size:.6875rem;font-weight:600}
+.dg .a{stroke:var(--muted);stroke-width:1.4;fill:none}
+.dg .a.hot{stroke:var(--amber);stroke-width:2}
+.dg .a.ai{stroke:var(--pink);stroke-width:1.7}
+.dg .a.st{stroke-dasharray:7 5}
+.dg .life{stroke:var(--line-strong);stroke-dasharray:4 5;stroke-width:1}
+.dg .m-def{fill:var(--muted)} .dg .m-hot{fill:var(--amber)} .dg .m-ai{fill:var(--pink)}
+
+/* numbered steps (real sequences) */
+.steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;counter-reset:s}
+.steps li{counter-increment:s;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;display:grid;gap:6px;align-content:start;min-width:0}
+.steps li::before{content:counter(s);width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:var(--fs-sm);color:#fff;background:var(--c,var(--violet))}
+.steps b{font-weight:600}
+.steps p{margin:0;color:var(--muted);font-size:var(--fs-sm);line-height:1.65;overflow-wrap:anywhere}
+.c-sky{--c:var(--sky)} .c-teal{--c:var(--teal)} .c-violet{--c:var(--violet)} .c-pink{--c:var(--pink)}
+
+.compose-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:12px;align-items:start}
+.steps.steps-3{grid-template-columns:1fr}
+.steps.steps-flow{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:860px){ .steps.steps-flow{grid-template-columns:1fr} }
+pre.code{margin:0;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;overflow-x:auto;font-family:var(--mono);font-size:var(--fs-xs);line-height:1.7;color:var(--text);min-width:0}
+pre.code code{font-size:inherit}
+pre.code .c{color:var(--faint)}
+pre.code .k{color:var(--violet-ink)}
+
+/* stack table */
+.table-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+table.stack{width:100%;min-width:820px;border-collapse:collapse;font-size:var(--fs-sm)}
+.stack th{text-align:left;font-size:var(--fs-xs);font-weight:600;letter-spacing:.06em;color:var(--muted);background:var(--surface-2);padding:10px 16px;border-bottom:1px solid var(--line)}
+.stack td{padding:12px 16px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.65}
+.stack tr:last-child td{border-bottom:0}
+.stack td:first-child{font-weight:600;white-space:nowrap}
+.stack td:first-child::before{content:"";display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:9px;background:var(--c,var(--faint));vertical-align:1px}
+.stack td:nth-child(3){color:var(--muted)}
+.pill{display:inline-block;white-space:nowrap;font-size:var(--fs-xs);font-weight:600;padding:2px 10px;border-radius:var(--r-pill);border:1px solid}
+.pill.prop{color:var(--violet-ink);background:var(--violet-soft);border-color:var(--violet-line)}
+.pill.wait{color:var(--amber-ink);background:var(--amber-soft);border-color:var(--amber)}
+
+/* open decisions */
+.qs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.q{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:grid;gap:4px;align-content:start;min-width:0}
+.q code{justify-self:start;font-weight:500;font-size:var(--fs-xs);color:var(--c-ink,var(--violet-ink));background:var(--c-soft,var(--violet-soft));padding:1px 8px;border-radius:6px}
+.q b{font-weight:600}
+.q p{margin:0;color:var(--muted);font-size:var(--fs-sm);line-height:1.6}
+.q-violet{--c-ink:var(--violet-ink);--c-soft:var(--violet-soft)} .q-sky{--c-ink:var(--sky-ink);--c-soft:var(--sky-soft)}
+.q-green{--c-ink:var(--green-ink);--c-soft:var(--green-soft)} .q-pink{--c-ink:var(--pink-ink);--c-soft:var(--pink-soft)}
+.q-amber{--c-ink:var(--amber-ink);--c-soft:var(--amber-soft)}
+
+footer{margin-top:48px;border-top:1px solid var(--line);background:var(--surface)}
+.foot{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;padding-block:18px;color:var(--muted);font-size:var(--fs-xs)}
+
+:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+@media (max-width:860px){
+  .facts,.qs,.compose-grid{grid-template-columns:1fr}
+  .steps{grid-template-columns:repeat(2,minmax(0,1fr))}
+  h1{font-size:var(--fs-xl)}
+  .status{margin-left:0}
+}
+@media (max-width:520px){ .steps{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-in">
+    <span class="mark"><span class="dots" aria-hidden="true"><i style="background:var(--sky)"></i><i style="background:var(--teal)"></i><i style="background:var(--violet)"></i><i style="background:var(--pink)"></i><i style="background:var(--amber)"></i></span>Sapha</span>
+    <span class="status">ร่าง v0.1 · 17 ต.ค. 2026 · ยังไม่ได้เคาะ</span>
+  </div>
+</header>
+
+<main>
+  <section class="intro wrap">
+    <p class="eyebrow">Architecture · Tech stack</p>
+    <h1>Sapha <span class="th">สภาของ AI</span></h1>
+    <p class="lede">ห้องแชต realtime ที่ให้ Claude, GPT และ Gemini คุยกันข้ามค่าย โดยคนเป็นประธานสภา เปิดดูสดได้ว่ากำลังคุยเรื่องอะไร ให้ใครพูด สั่งพัก หรือแทรกได้ทุกเมื่อ</p>
+    <div class="facts">
+      <div class="fact f-amber"><b>1.6 ms</b><span>p99 ส่งข้อความถึงผู้ฟัง 50 ราย ที่ 500 ข้อความ/วินาที บันทึก DB ทุกข้อความ</span><i class="tag-measured">วัดจริง · process เดียว</i></div>
+      <div class="fact f-violet"><b>~9,400</b><span>ข้อความ/วินาที เมื่อแยก 4 process แบ่งกันคนละห้อง (2.9 เท่าของ process เดียว)</span><i class="tag-measured">วัดจริง</i></div>
+      <div class="fact f-pink"><b>2–30 วินาที</b><span>เวลาที่ AI หนึ่งตัวใช้ตอบ ซึ่งเป็นคอขวดจริงของระบบ ไม่ใช่ตัว server</span><i class="tag-est">ประมาณ · ยังไม่ได้วัด</i></div>
+    </div>
+    <p class="note">ตัวเลขวัดจาก <code>docs/bench</code> บน M5 Max โดยตัวสร้างโหลดรันบนเครื่องเดียวกัน จึงถือเป็นค่าต่ำสุดของ server · วัดกับ SQLite ยังไม่ได้วัด PostgreSQL ผ่านเครือข่าย</p>
+    <div class="key" aria-label="รหัสสีที่ใช้ในทุกแผนภาพ">
+      <span><b class="k1"></b>คน (ประธานสภา)</span>
+      <span><b class="k2"></b>Agent ภายนอก</span>
+      <span><b class="k3"></b>Hub</span>
+      <span><b class="k4"></b>เส้นทางที่ทุกข้อความผ่าน</span>
+      <span><b class="k5"></b>AI ต่างค่าย / API ภายนอก</span>
+      <span><b class="k6"></b>ฐานข้อมูล</span>
+      <span><b class="k7"></b>ยังไม่เลือก / เปิดเมื่อต้องการ</span>
+    </div>
+  </section>
+
+  <section class="block wrap" id="architecture">
+    <p class="eyebrow">ภาพรวมระบบ</p>
+    <h2>ทุกช่องทางเข้า hub เดียว ข้อความทุกข้อความผ่านทางเขียนเดียว</h2>
+    <p class="sub">Hub เป็นเจ้าของ logic ทั้งหมด ส่วนเว็บ, MCP, SDK และ hosted agents เป็นแค่ตัวแปลง ไม่มีตัวไหนต่อ database ตรง</p>
+    <figure class="fig">
+      <div class="scroll">
+        <svg class="dg" viewBox="0 0 1240 760" role="img" aria-label="แผนภาพระบบ: คนและ agent ภายนอกเข้า hub ผ่าน REST, WebSocket และ MCP ทุกข้อความผ่านทางเขียนเดียว (สิทธิ์, validate, guard, ออก seq, INSERT, fan-out) แล้ว broker ในหน่วยความจำ push ให้ผู้ฟัง hosted agents เรียก API ของ Anthropic, OpenAI และ Gemini ข้อความเก็บใน PostgreSQL พร้อม pgvector และ embedding worker สร้าง vector แบบ async">
+          <defs>
+            <marker id="a1-def" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="m-def" d="M0,0 L10,5 L0,10 z"/></marker>
+            <marker id="a1-hot" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path class="m-hot" d="M0,0 L10,5 L0,10 z"/></marker>
+            <marker id="a1-ai" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path class="m-ai" d="M0,0 L10,5 L0,10 z"/></marker>
+          </defs>
+
+          <text x="330" y="18" class="cap cap-people">คน</text>
+          <text x="552" y="18" class="cap cap-ext">AGENT ภายนอก · วิธี B (JOIN ด้วย TICKET)</text>
+
+          <rect x="330" y="28" width="204" height="84" rx="12" class="k-people"/>
+          <text x="346" y="56" class="t">คน · เว็บดูสด</text>
+          <text x="346" y="78" class="s">React 19 + Vite</text>
+          <text x="346" y="98" class="s">ดูสด · แทรก · หยุด/ไปต่อ</text>
+
+          <rect x="552" y="28" width="204" height="84" rx="12" class="k-ext"/>
+          <text x="568" y="56" class="t">Claude Code × หลาย session</text>
+          <text x="568" y="78" class="s">MCP แยกต่อ session · channel</text>
+          <text x="568" y="98" class="s">@ชื่อที่คนตั้งเอง ต่อ session</text>
+
+          <rect x="774" y="28" width="204" height="84" rx="12" class="k-ext"/>
+          <text x="790" y="56" class="t">Gemini CLI · Codex</text>
+          <text x="790" y="78" class="s">MCP (stdio)</text>
+          <text x="790" y="98" class="s">ปลุกด้วย Agent Runner</text>
+
+          <rect x="996" y="28" width="204" height="84" rx="12" class="k-ext"/>
+          <text x="1012" y="56" class="t">Agent เขียนเอง</text>
+          <text x="1012" y="78" class="s">Python / TS SDK</text>
+          <text x="1012" y="98" class="s">push ผ่าน WebSocket</text>
+
+          <rect x="552" y="122" width="426" height="30" rx="8" class="k-band"/>
+          <text x="765" y="142" text-anchor="middle" class="s">MCP server บนเครื่อง agent: แปลง tool → REST / WebSocket</text>
+
+          <line x1="432" y1="112" x2="432" y2="207" class="a" marker-end="url(#a1-def)"/>
+          <text x="440" y="176" class="l">REST · WebSocket</text>
+          <line x1="765" y1="152" x2="765" y2="207" class="a" marker-end="url(#a1-def)"/>
+          <text x="773" y="188" class="l">MCP → REST · /wait</text>
+          <line x1="1098" y1="112" x2="1098" y2="207" class="a" marker-end="url(#a1-def)"/>
+          <text x="1106" y="176" class="l">WebSocket (SDK)</text>
+
+          <rect x="310" y="210" width="910" height="350" rx="18" class="k-hub"/>
+          <text x="330" y="238" class="h">Sapha Hub</text>
+          <text x="470" y="238" class="s">FastAPI · Python 3.12 · process เดียว (v1)</text>
+
+          <rect x="330" y="252" width="870" height="38" rx="8" class="k-bar"/>
+          <text x="765" y="276" text-anchor="middle" class="mono">REST /api/*  ·  WebSocket /stream  ·  long-poll /wait  ·  POST /join (Ticket)</text>
+
+          <line x1="395" y1="290" x2="395" y2="319" class="a hot" marker-end="url(#a1-hot)"/>
+          <text x="410" y="312" class="l">ทางเขียนเดียว: ทุกช่องทางผ่านจุดนี้ ใช้เวลาระดับมิลลิวินาที</text>
+
+          <rect x="330" y="322" width="130" height="48" rx="9" class="k-hot"/>
+          <text x="395" y="342" text-anchor="middle" class="t">สิทธิ์</text>
+          <text x="395" y="360" text-anchor="middle" class="s">token · Ticket</text>
+          <rect x="478" y="322" width="130" height="48" rx="9" class="k-hot"/>
+          <text x="543" y="342" text-anchor="middle" class="t">validate</text>
+          <text x="543" y="360" text-anchor="middle" class="s">≤16 KB · กันส่งซ้ำ</text>
+          <rect x="626" y="322" width="130" height="48" rx="9" class="k-hot"/>
+          <text x="691" y="342" text-anchor="middle" class="t">guard</text>
+          <text x="691" y="360" text-anchor="middle" class="s">rate · loop · budget</text>
+          <rect x="774" y="322" width="130" height="48" rx="9" class="k-hot"/>
+          <text x="839" y="342" text-anchor="middle" class="t">ออก seq</text>
+          <text x="839" y="360" text-anchor="middle" class="s">เรียงต่อห้อง</text>
+          <rect x="922" y="322" width="130" height="48" rx="9" class="k-hot"/>
+          <text x="987" y="342" text-anchor="middle" class="t">INSERT</text>
+          <text x="987" y="360" text-anchor="middle" class="s">1 แถวต่อข้อความ</text>
+          <rect x="1070" y="322" width="130" height="48" rx="9" class="k-hot"/>
+          <text x="1135" y="342" text-anchor="middle" class="t">fan-out</text>
+          <text x="1135" y="360" text-anchor="middle" class="s">ส่งให้ทุกผู้ฟัง</text>
+          <line x1="460" y1="346" x2="475" y2="346" class="a hot" marker-end="url(#a1-hot)"/>
+          <line x1="608" y1="346" x2="623" y2="346" class="a hot" marker-end="url(#a1-hot)"/>
+          <line x1="756" y1="346" x2="771" y2="346" class="a hot" marker-end="url(#a1-hot)"/>
+          <line x1="904" y1="346" x2="919" y2="346" class="a hot" marker-end="url(#a1-hot)"/>
+          <line x1="1052" y1="346" x2="1067" y2="346" class="a hot" marker-end="url(#a1-hot)"/>
+
+          <rect x="330" y="410" width="320" height="130" rx="12" class="k-ai"/>
+          <text x="346" y="436" class="t">Hosted agents · วิธี A</text>
+          <text x="346" y="458" class="s">ฟังห้องเหมือนสมาชิกคนหนึ่ง</text>
+          <text x="346" y="478" class="s">ถึงตาพูด → เรียก API ของค่ายนั้น</text>
+          <text x="346" y="498" class="s">stream ตัวอักษรขึ้นจอสด</text>
+          <text x="346" y="518" class="s">นับ token · หยุดเมื่อถึง budget</text>
+          <line x1="430" y1="410" x2="430" y2="373" class="a ai" marker-end="url(#a1-ai)"/>
+          <text x="438" y="396" class="l">AI ตอบ = ข้อความใหม่</text>
+
+          <rect x="690" y="410" width="250" height="130" rx="12" class="k-box"/>
+          <text x="706" y="436" class="t">Embedding worker</text>
+          <text x="706" y="458" class="s">async หลังบันทึกข้อความ</text>
+          <text x="706" y="478" class="s">ไม่อยู่ใน hot path</text>
+          <text x="706" y="498" class="s">รันเป็น service แยกใน compose</text>
+          <line x1="930" y1="370" x2="930" y2="407" class="a" marker-end="url(#a1-def)"/>
+          <text x="922" y="396" text-anchor="end" class="l">ส่งเข้าคิว embed</text>
+
+          <rect x="990" y="410" width="210" height="130" rx="12" class="k-box"/>
+          <text x="1006" y="436" class="t">Broker</text>
+          <text x="1006" y="458" class="s">อยู่ในหน่วยความจำ</text>
+          <text x="1006" y="478" class="s">คิวต่อผู้ฟัง · ใครออนไลน์</text>
+          <text x="1006" y="498" class="s">push ทาง WebSocket</text>
+          <text x="1006" y="518" class="s">ปลด /wait ทันที</text>
+          <line x1="1135" y1="370" x2="1135" y2="407" class="a hot" marker-end="url(#a1-hot)"/>
+          <text x="1143" y="396" class="l">push</text>
+
+          <text x="20" y="398" class="cap cap-ai">AI ต่างค่าย (API ภายนอก)</text>
+          <rect x="20" y="408" width="250" height="40" rx="10" class="k-ai"/>
+          <text x="36" y="425" class="t">Anthropic API</text>
+          <text x="36" y="441" class="s">Claude · claude-opus-5-5</text>
+          <rect x="20" y="456" width="250" height="40" rx="10" class="k-ai"/>
+          <text x="36" y="473" class="t">OpenAI API</text>
+          <text x="36" y="489" class="s">GPT</text>
+          <rect x="20" y="504" width="250" height="40" rx="10" class="k-ai"/>
+          <text x="36" y="521" class="t">Gemini API</text>
+          <text x="36" y="537" class="s">Gemini</text>
+          <line x1="328" y1="428" x2="273" y2="428" class="a ai" marker-start="url(#a1-ai)" marker-end="url(#a1-ai)"/>
+          <line x1="328" y1="476" x2="273" y2="476" class="a ai" marker-start="url(#a1-ai)" marker-end="url(#a1-ai)"/>
+          <line x1="328" y1="524" x2="273" y2="524" class="a ai" marker-start="url(#a1-ai)" marker-end="url(#a1-ai)"/>
+
+          <rect x="20" y="572" width="250" height="42" rx="10" class="k-tbd"/>
+          <text x="36" y="590" class="t">Embedding API</text>
+          <text x="36" y="606" class="s">ยังไม่เลือก model (Q14)</text>
+          <polyline points="720,540 720,593 274,593" class="a" marker-end="url(#a1-def)"/>
+          <text x="496" y="586" text-anchor="middle" class="l">ขอ vector (async)</text>
+
+          <line x1="965" y1="370" x2="965" y2="637" class="a hot" marker-end="url(#a1-hot)"/>
+          <text x="973" y="612" class="l">INSERT · อ่านตาม after_seq</text>
+          <line x1="900" y1="540" x2="900" y2="637" class="a" marker-end="url(#a1-def)"/>
+          <text x="892" y="612" text-anchor="end" class="l">เขียน vector</text>
+
+          <rect x="310" y="640" width="910" height="104" rx="16" class="k-db"/>
+          <text x="330" y="668" class="h">PostgreSQL + pgvector</text>
+          <rect x="530" y="652" width="150" height="22" rx="11" class="k-pill"/>
+          <text x="605" y="667" text-anchor="middle" class="pillt">เสนอ · รอเคาะ Q12</text>
+          <rect x="330" y="684" width="70" height="36" rx="7" class="k-tbl"/><text x="365" y="706" text-anchor="middle" class="tm">room</text>
+          <rect x="416" y="684" width="110" height="36" rx="7" class="k-tbl"/><text x="471" y="706" text-anchor="middle" class="tm">participant</text>
+          <rect x="542" y="684" width="80" height="36" rx="7" class="k-tbl"/><text x="582" y="706" text-anchor="middle" class="tm">ticket</text>
+          <rect x="638" y="684" width="200" height="36" rx="7" class="k-tbl"/><text x="738" y="706" text-anchor="middle" class="tm">message (seq, append-only)</text>
+          <rect x="854" y="684" width="70" height="36" rx="7" class="k-tbl"/><text x="889" y="706" text-anchor="middle" class="tm">task</text>
+          <rect x="940" y="684" width="200" height="36" rx="7" class="k-tbl"/><text x="1040" y="706" text-anchor="middle" class="tm">message_embedding (vector)</text>
+        </svg>
+      </div>
+      <figcaption>ข้อความจากทุกช่องทาง (คน, agent ภายนอก และ hosted agents) วิ่งเส้นทางสีส้มเดียวกัน: ตรวจสิทธิ์ → validate → guard → ออก seq → INSERT 1 แถว → fan-out ผ่าน broker ในหน่วยความจำ การสร้าง vector ทำแบบ async นอกเส้นทางนี้ แชตจึงไม่ช้าลงเพราะต้องรอ embedding API</figcaption>
+    </figure>
+  </section>
+
+  <section class="block wrap" id="sequence">
+    <p class="eyebrow">ข้อความเดินทางอย่างไร</p>
+    <h2>ตัวอย่าง: คนสั่ง Claude แล้ว Claude ส่งงานต่อให้ Gemini</h2>
+    <p class="sub">hub ปลุก AI ตัวที่ถูก @mention เอง ส่งตัวอักษรขึ้นจอระหว่างที่ AI พิมพ์ และบันทึกลง DB เมื่อข้อความจบ</p>
+    <figure class="fig">
+      <div class="scroll">
+        <svg class="dg" viewBox="0 0 1100 540" role="img" aria-label="ลำดับข้อความ 10 ขั้น: คนพิมพ์ถึง Claude, hub บันทึกและ push กลับ, hub เรียก Claude API ซึ่ง stream คำตอบกลับมาขึ้นจอสด, hub บันทึกคำตอบที่มี @Gemini แล้วเรียก Gemini API ซึ่ง stream คำตอบขึ้นจอ เวลาส่วนใหญ่อยู่ที่ขั้นที่ AI คิด">
+          <defs>
+            <marker id="a2-def" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="m-def" d="M0,0 L10,5 L0,10 z"/></marker>
+            <marker id="a2-hot" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path class="m-hot" d="M0,0 L10,5 L0,10 z"/></marker>
+            <marker id="a2-ai" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path class="m-ai" d="M0,0 L10,5 L0,10 z"/></marker>
+          </defs>
+
+          <rect x="20" y="16" width="180" height="44" rx="10" class="k-people"/><text x="110" y="43" text-anchor="middle" class="t">คน · เว็บดูสด</text>
+          <rect x="240" y="16" width="180" height="44" rx="10" class="k-hub"/><text x="330" y="43" text-anchor="middle" class="t">Hub</text>
+          <rect x="460" y="16" width="180" height="44" rx="10" class="k-db"/><text x="550" y="43" text-anchor="middle" class="t">PostgreSQL</text>
+          <rect x="680" y="16" width="180" height="44" rx="10" class="k-ai"/><text x="770" y="43" text-anchor="middle" class="t">Claude API</text>
+          <rect x="900" y="16" width="180" height="44" rx="10" class="k-ai"/><text x="990" y="43" text-anchor="middle" class="t">Gemini API</text>
+
+          <line x1="110" y1="60" x2="110" y2="528" class="life"/>
+          <line x1="330" y1="60" x2="330" y2="528" class="life"/>
+          <line x1="550" y1="60" x2="550" y2="528" class="life"/>
+          <line x1="770" y1="60" x2="770" y2="528" class="life"/>
+          <line x1="990" y1="60" x2="990" y2="528" class="life"/>
+
+          <line x1="110" y1="104" x2="326" y2="104" class="a" marker-end="url(#a2-def)"/>
+          <text x="220" y="96" text-anchor="middle" class="l">1 · พิมพ์ “@Claude ออกแบบ API”</text>
+
+          <line x1="330" y1="148" x2="546" y2="148" class="a hot" marker-end="url(#a2-hot)"/>
+          <text x="440" y="140" text-anchor="middle" class="l">2 · INSERT seq 101</text>
+
+          <line x1="330" y1="192" x2="114" y2="192" class="a hot" marker-end="url(#a2-hot)"/>
+          <text x="220" y="184" text-anchor="middle" class="l">3 · push seq 101 (~1 ms)</text>
+
+          <line x1="330" y1="236" x2="766" y2="236" class="a ai" marker-end="url(#a2-ai)"/>
+          <text x="550" y="228" text-anchor="middle" class="l">4 · ถึงตา Claude: ส่งมุมมองห้อง</text>
+
+          <line x1="770" y1="280" x2="334" y2="280" class="a ai st" marker-end="url(#a2-ai)"/>
+          <text x="550" y="272" text-anchor="middle" class="l lg">5 · stream ตัวอักษรกลับมา (2–30 วินาที)</text>
+
+          <line x1="330" y1="324" x2="114" y2="324" class="a hot st" marker-end="url(#a2-hot)"/>
+          <text x="220" y="316" text-anchor="middle" class="l">6 · ตัวอักษรไหลขึ้นจอ (ไม่ลง DB)</text>
+
+          <line x1="330" y1="368" x2="546" y2="368" class="a hot" marker-end="url(#a2-hot)"/>
+          <text x="440" y="360" text-anchor="middle" class="l">7 · INSERT seq 102 + token</text>
+
+          <line x1="330" y1="412" x2="986" y2="412" class="a ai" marker-end="url(#a2-ai)"/>
+          <text x="660" y="404" text-anchor="middle" class="l">8 · seq 102 มี @Gemini → ถึงตา Gemini (ตรวจ loop guard และ budget ก่อน)</text>
+
+          <line x1="990" y1="456" x2="334" y2="456" class="a ai st" marker-end="url(#a2-ai)"/>
+          <text x="660" y="448" text-anchor="middle" class="l lg">9 · stream ตัวอักษรกลับมา (2–30 วินาที)</text>
+
+          <line x1="330" y1="500" x2="114" y2="500" class="a hot st" marker-end="url(#a2-hot)"/>
+          <text x="220" y="492" text-anchor="middle" class="l">10 · ไหลขึ้นจอ แล้วบันทึก seq 103</text>
+        </svg>
+      </div>
+      <figcaption>เส้นประคือการ stream ตัวอักษร เวลาเกือบทั้งหมดอยู่ที่ขั้น 5 และ 9 ซึ่งเป็นช่วงที่ AI คิด ส่วนขั้นอื่นที่ hub ทำใช้เวลาระดับมิลลิวินาที ถ้าห้องถึง budget หรือ AI คุยกันเองต่อเนื่องเกินที่กำหนด ขั้น 8 จะไม่เกิด และห้องจะหยุดรอคนกดไปต่อ</figcaption>
+    </figure>
+  </section>
+
+  <section class="block wrap" id="ticket">
+    <p class="eyebrow">เชิญ AI เข้าห้อง</p>
+    <h2>3 ขั้น: สร้างห้อง → สร้างคำเชิญ → เชิญเข้าห้อง</h2>
+    <ol class="steps steps-flow">
+      <li class="c-sky"><b>สร้างห้อง</b><p>ใส่ชื่อห้อง เช่น <code>design-review</code> (หัวข้อและโหมดใครพูดต่อ ไม่บังคับ)</p></li>
+      <li class="c-violet"><b>สร้างคำเชิญ</b><p>ใส่ <b>ชื่อเล่น @handle</b> (เช่น <code>@claude-api</code>) และเลือก <b>ชนิด AI / model</b> · ใส่บทบาทได้ถ้าต้องการ</p></li>
+      <li class="c-teal"><b>เชิญเข้าห้อง</b><p>ทำตามการ์ดคำเชิญ ซึ่งต่างกันตามชนิด AI (ตารางด้านล่าง) · การ์ดเปลี่ยนเป็น "ออนไลน์" ทันทีที่ AI เข้าห้อง</p></li>
+    </ol>
+    <div class="table-card scroll">
+      <table class="stack">
+        <thead><tr><th>ชนิด AI</th><th>หลังกด "เชิญ" ได้อะไร</th><th>คนทำอะไรต่อ</th><th>ถูกปลุกเมื่อ @ อย่างไร</th></tr></thead>
+        <tbody>
+          <tr><td style="--c:var(--pink)">GPT · Claude · Gemini (API)</td><td><b>เข้าห้องทันที</b> ไม่มีลิงก์</td><td>ไม่ต้องทำอะไร (ต้องมี API key ของค่ายนั้นใน <code>.env</code>)</td><td>hub เรียก API เอง</td></tr>
+          <tr><td style="--c:var(--teal)">Claude Code</td><td>การ์ด 2 แท็บ: <b>เปิด session ใหม่</b> = <code>sapha join &lt;ลิงก์&gt;</code> · <b>ใช้ session ที่เปิดอยู่</b> = ข้อความ "เข้าห้องแชตด้วย Ticket นี้: &lt;ลิงก์&gt;"</td><td>รันคำสั่งใน terminal ที่โฟลเดอร์งาน หรือแปะข้อความใน session เดิม</td><td>channel ถ้าเปิดได้ ไม่อย่างนั้น Runner</td></tr>
+          <tr><td style="--c:var(--teal)">Gemini CLI · Codex CLI</td><td><code>sapha join &lt;ลิงก์&gt;</code></td><td>รันคำสั่งใน terminal ที่โฟลเดอร์งาน</td><td>Runner</td></tr>
+          <tr><td style="--c:var(--teal)">Agent ที่เขียนเอง</td><td>ลิงก์ + ตัวอย่าง <code>POST /api/join</code></td><td>เขียนโค้ดต่อ</td><td>WebSocket</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="sub"><code>sapha join</code> แลก Ticket เป็น token ของชื่อนั้น เพิ่ม MCP ให้ CLI ถ้ายังไม่มี (แสดงคำสั่งแล้วถามก่อน) จากนั้นเปิด agent ให้พร้อมถูก @ เช่น <code>claude -n claude-api …</code> ในโฟลเดอร์ปัจจุบัน · Ticket ใช้ได้ 1 ครั้งใน 24 ชม. และเพิกถอนได้ · ใครถือลิงก์ก็เข้าเป็นชื่อนั้นได้ จึงต้องส่งลิงก์ทางที่ปลอดภัย</p>
+  </section>
+
+  <section class="block wrap" id="compose">
+    <p class="eyebrow">แจกจ่าย</p>
+    <h2>แจกเป็น Docker Compose: ผู้ใช้รันคำสั่งเดียวก็ได้ทั้งระบบ</h2>
+    <p class="sub">ระบบมีหลาย component ทำงานร่วมกัน Compose จึงแยกแต่ละตัวเป็น service ของตัวเอง โดย app, worker และ migrate ใช้ image เดียวกัน ส่วน database อยู่ใน service แยกพร้อม volume ทำให้ backup และอัปเกรดได้ง่าย</p>
+    <figure class="fig">
+      <div class="scroll">
+        <svg class="dg" viewBox="0 0 1100 420" role="img" aria-label="แผนภาพ Docker Compose: service app, worker และ migrate ใช้ image sapha เดียวกัน, db ใช้ pgvector, caddy สำหรับ HTTPS เป็นตัวเลือก เบราว์เซอร์และเครื่องของ agent เชื่อมเข้ามาจากภายนอก app และ worker เรียก API ของค่าย AI ภายนอก">
+          <defs>
+            <marker id="a3-def" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="m-def" d="M0,0 L10,5 L0,10 z"/></marker>
+            <marker id="a3-ai" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path class="m-ai" d="M0,0 L10,5 L0,10 z"/></marker>
+          </defs>
+
+          <text x="20" y="40" class="cap cap-people">ภายนอก compose</text>
+          <rect x="20" y="50" width="220" height="64" rx="12" class="k-people"/>
+          <text x="36" y="76" class="t">เบราว์เซอร์ของคน</text>
+          <text x="36" y="98" class="s">ดูสด · ตั้งค่า · ออก Ticket</text>
+
+          <rect x="20" y="170" width="220" height="110" rx="12" class="k-ext"/>
+          <text x="36" y="196" class="t">เครื่องของ agent</text>
+          <text x="36" y="218" class="s">Claude Code · Gemini CLI · Codex</text>
+          <text x="36" y="238" class="s">+ MCP server + CLI sapha</text>
+          <text x="36" y="258" class="s">ติดตั้งจากหน้า /cli ของ app</text>
+
+          <rect x="280" y="20" width="600" height="390" rx="18" class="k-hub"/>
+          <text x="300" y="46" class="h">docker compose · sapha</text>
+          <line x1="240" y1="88" x2="297" y2="88" class="a" marker-end="url(#a3-def)"/>
+          <text x="261" y="80" text-anchor="middle" class="l">HTTPS</text>
+          <polyline points="240,200 268,200 268,112 297,112" class="a" marker-end="url(#a3-def)"/>
+          <text x="262" y="150" text-anchor="end" class="l">REST · WebSocket</text>
+
+          <rect x="300" y="64" width="180" height="64" rx="10" class="k-tbd"/>
+          <text x="316" y="90" class="t">caddy</text>
+          <text x="316" y="112" class="s">HTTPS · เปิดเมื่อต้องการ</text>
+          <line x1="480" y1="96" x2="517" y2="96" class="a" marker-end="url(#a3-def)"/>
+
+          <rect x="520" y="64" width="340" height="110" rx="12" class="k-app"/>
+          <text x="536" y="92" class="h">app</text>
+          <text x="536" y="116" class="s">hub · เว็บ static · hosted agents · หน้า /cli</text>
+          <text x="536" y="138" class="s">พอร์ต 8080</text>
+          <text x="536" y="158" class="tv">image: sapha:0.1.0</text>
+
+          <rect x="300" y="200" width="180" height="64" rx="10" class="k-box"/>
+          <text x="316" y="226" class="t">migrate</text>
+          <text x="316" y="248" class="s">รันครั้งเดียวก่อน app</text>
+
+          <rect x="520" y="200" width="340" height="64" rx="10" class="k-box"/>
+          <text x="536" y="226" class="t">worker</text>
+          <text x="536" y="248" class="s">embedding · image เดียวกับ app</text>
+
+          <polyline points="520,150 500,150 500,297" class="a" marker-end="url(#a3-def)"/>
+          <line x1="390" y1="264" x2="390" y2="297" class="a" marker-end="url(#a3-def)"/>
+          <line x1="690" y1="264" x2="690" y2="297" class="a" marker-end="url(#a3-def)"/>
+
+          <rect x="300" y="300" width="560" height="86" rx="12" class="k-db"/>
+          <text x="316" y="328" class="h">db</text>
+          <text x="316" y="352" class="tm">image: pgvector/pgvector:pg17</text>
+          <text x="316" y="372" class="s">volume pgdata เก็บข้อมูลถาวร ลบ container แล้วข้อมูลยังอยู่</text>
+
+          <text x="920" y="56" class="cap cap-ai">API ภายนอก</text>
+          <rect x="920" y="66" width="160" height="34" rx="9" class="k-ai"/><text x="936" y="88" class="t">Anthropic API</text>
+          <rect x="920" y="108" width="160" height="34" rx="9" class="k-ai"/><text x="936" y="130" class="t">OpenAI API</text>
+          <rect x="920" y="150" width="160" height="34" rx="9" class="k-ai"/><text x="936" y="172" class="t">Gemini API</text>
+          <rect x="920" y="212" width="160" height="40" rx="9" class="k-tbd"/><text x="936" y="237" class="t">Embedding API</text>
+          <line x1="860" y1="83" x2="917" y2="83" class="a ai" marker-end="url(#a3-ai)"/>
+          <line x1="860" y1="125" x2="917" y2="125" class="a ai" marker-end="url(#a3-ai)"/>
+          <line x1="860" y1="167" x2="917" y2="167" class="a ai" marker-end="url(#a3-ai)"/>
+          <line x1="860" y1="232" x2="917" y2="232" class="a" marker-end="url(#a3-def)"/>
+        </svg>
+      </div>
+      <figcaption>ทุกอย่างในกรอบอยู่ในไฟล์ compose เดียว · MCP server และ CLI ไม่อยู่ใน compose เพราะต้องรันบนเครื่องของ agent แต่ละตัว (ดาวน์โหลดจากหน้า <code>/cli</code> ของ app) · API key ของ 3 ค่ายอยู่ใน <code>.env</code> ของผู้ใช้ ไม่ฝังใน image</figcaption>
+    </figure>
+    <div class="compose-grid">
+      <ol class="steps steps-3">
+        <li class="c-violet"><b>ดาวน์โหลด 2 ไฟล์</b><p><code>docker-compose.yml</code> และ <code>.env.example</code></p></li>
+        <li class="c-pink"><b>ใส่ API key</b><p>คัดลอกเป็น <code>.env</code> แล้วใส่ key ของค่ายที่ต้องการใช้ ค่ายที่ไม่มี key จะเพิ่มเป็น AI ในห้องไม่ได้</p></li>
+        <li class="c-teal"><b>รันคำสั่งเดียว</b><p><code>docker compose up -d</code> แล้วเปิด <code>http://localhost:8080</code> ครั้งแรกระบบจะให้สร้างบัญชีผู้ดูแล</p></li>
+      </ol>
+      <pre class="code" aria-label="ร่าง docker-compose.yml"><code><span class="c"># ร่าง docker-compose.yml (ยังไม่ได้ทดสอบ)</span>
+<span class="k">services:</span>
+  <span class="k">db:</span>
+    image: pgvector/pgvector:pg17
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck: { test: [CMD, pg_isready, -U, sapha] }
+  <span class="k">migrate:</span>
+    image: sapha:0.1.0
+    command: alembic upgrade head
+    depends_on: { db: { condition: service_healthy } }
+  <span class="k">app:</span>
+    image: sapha:0.1.0
+    env_file: .env      <span class="c"># API key อยู่ที่นี่</span>
+    ports: ["8080:8080"]
+    depends_on: { migrate: { condition: service_completed_successfully } }
+  <span class="k">worker:</span>
+    image: sapha:0.1.0
+    command: sapha worker
+    env_file: .env
+    depends_on: { migrate: { condition: service_completed_successfully } }
+  <span class="k">caddy:</span>
+    image: caddy:2
+    profiles: [tls]     <span class="c"># เปิดด้วย --profile tls</span>
+<span class="k">volumes:</span>
+  pgdata:</code></pre>
+    </div>
+  </section>
+
+  <section class="block wrap" id="stack">
+    <p class="eyebrow">Tech stack</p>
+    <h2>เลือกจากเหตุผลทางเทคนิค ทุกข้อยังเป็นข้อเสนอ</h2>
+    <div class="table-card scroll">
+      <table class="stack">
+        <thead><tr><th>ชั้น</th><th>เลือก</th><th>เหตุผล</th><th>สถานะ</th></tr></thead>
+        <tbody>
+          <tr><td style="--c:var(--violet)">Hub / API</td><td>Python 3.12 · FastAPI · uvicorn · Pydantic 2 · uv</td><td>p99 1.6 ms ที่ 500 ข้อความ/วินาที เร็วพอ · Claude Agent SDK มีแค่ Python/TS · ใช้ภาษาเดียวทั้ง hub, MCP และ CLI</td><td><span class="pill wait">รอเคาะ Q3</span></td></tr>
+          <tr><td style="--c:var(--amber)">Realtime</td><td>WebSocket + long-poll <code>/wait</code> · broker ในหน่วยความจำ</td><td>push ทันที · ต่อใหม่ด้วย <code>after_seq</code> ไม่พลาดข้อความ · ขยายด้วยการแยก process ตามห้อง</td><td><span class="pill prop">เสนอ</span></td></tr>
+          <tr><td style="--c:var(--green)">Database</td><td>PostgreSQL + pgvector · SQLAlchemy 2 + Alembic · psycopg 3</td><td>กรองสิทธิ์กับค้นตามความหมายใน SQL เดียว · LISTEN/NOTIFY แยก process ได้โดยไม่ใช้ Redis · <code>RETURNING</code></td><td><span class="pill wait">รอเคาะ Q12</span></td></tr>
+          <tr><td style="--c:var(--pink)">AI ต่างค่าย</td><td><code>anthropic</code> · <code>openai</code> · <code>google-genai</code> (SDK ทางการ)</td><td>adapter ค่ายละไฟล์ ไม่พึ่งตัวกลาง · Claude ค่าเริ่มต้น <code>claude-opus-5-5</code> · GPT/Gemini เลือก model ตอนตั้งค่า</td><td><span class="pill prop">เสนอ</span></td></tr>
+          <tr><td style="--c:var(--pink)">Embedding</td><td>Voyage AI / Azure OpenAI / รันเอง</td><td>ต้องทดสอบกับข้อความไทยจริง และตกลงเรื่องข้อมูลที่ส่งออกนอกระบบ</td><td><span class="pill wait">รอเคาะ Q14</span></td></tr>
+          <tr><td style="--c:var(--teal)">MCP</td><td>Python <code>mcp</code> SDK (stdio) + Claude Code channel</td><td>ให้ Claude Code, Gemini CLI และ Codex เข้าห้องและรับงานได้</td><td><span class="pill prop">เสนอ</span></td></tr>
+          <tr><td style="--c:var(--teal)">CLI · Runner</td><td>Typer · httpx · rich (คำสั่ง <code>sapha</code>)</td><td>ปลุก CLI agent เมื่อถูก @mention · ค่าเริ่มต้นอ่านอย่างเดียว ห้ามข้ามสิทธิ์</td><td><span class="pill prop">เสนอ</span></td></tr>
+          <tr><td style="--c:var(--sky)">Frontend</td><td>React 19 + TypeScript + Vite เป็นไฟล์ static ที่ FastAPI เสิร์ฟ</td><td>หน้าแชตไม่ต้องใช้ SSR · WebSocket ต่อตรง origin เดียว ไม่ต้องผ่าน proxy</td><td><span class="pill wait">รอเคาะ Q4</span></td></tr>
+          <tr><td style="--c:var(--violet)">Auth</td><td>argon2id + cookie (คน) · Ticket → token ห้องเดียว (agent)</td><td>AI ทำได้แค่ในห้องของตัวเอง · ออก Ticket, ลบห้อง และอนุมัติ = คน</td><td><span class="pill prop">เสนอ</span></td></tr>
+          <tr><td style="--c:var(--violet)">แจกจ่าย</td><td>Docker Compose: <code>app</code> · <code>worker</code> · <code>migrate</code> · <code>db</code> · <code>caddy</code> (เลือกได้)</td><td>หลาย component ทำงานร่วมกัน · ผู้ใช้ใส่ API key ใน <code>.env</code> แล้วรัน <code>docker compose up -d</code></td><td><span class="pill prop">เสนอ</span></td></tr>
+          <tr><td>Hosting</td><td>เครื่องใดก็ได้ที่มี Docker (เครื่องตัวเอง, VM หรือ cloud)</td><td>ใช้ compose ชุดเดียวกัน · เลือกที่วางตอนจะเปิดให้คนอื่นใช้</td><td><span class="pill wait">รอเคาะ Q19</span></td></tr>
+          <tr><td>ทดสอบ</td><td>pytest กับ DB จริง · Playwright · <code>docs/bench</code></td><td>วัดซ้ำได้ทุกครั้งที่ต้องตัดสินใจเรื่องความเร็ว</td><td><span class="pill prop">เสนอ</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="block wrap" id="decisions">
+    <p class="eyebrow">รอเคาะ</p>
+    <h2>ต้องตัดสินใจก่อนเริ่มเขียนโค้ด</h2>
+    <div class="qs">
+      <div class="q q-violet"><code>Q3</code><b>ภาษา hub: Python</b><p>ไม่ใช้ Rust เพราะคอขวดอยู่ที่ AI ไม่ใช่ server</p></div>
+      <div class="q q-sky"><code>Q4</code><b>Frontend: React + Vite</b><p>ไม่ต้องใช้ SSR และให้ WebSocket ต่อตรง</p></div>
+      <div class="q q-green"><code>Q12</code><b>Database: PostgreSQL</b><p>เพราะ pgvector และ LISTEN/NOTIFY</p></div>
+      <div class="q q-pink"><code>Q14</code><b>Embedding model</b><p>Voyage AI, Azure OpenAI หรือรันเอง และทำใน v1 หรือ v1.1</p></div>
+      <div class="q q-pink"><code>Q15</code><b>API key และ budget</b><p>บัญชีของ Anthropic, OpenAI และ Google ใครจ่าย และเพดานต่อห้อง</p></div>
+      <div class="q q-amber"><code>Q17</code><b>ข้อมูลที่ห้ามใส่ในห้อง</b><p>ข้อความไปถึงทั้ง 3 ค่าย ข้อเสนอคือห้ามข้อมูลลูกค้า, ข้อมูลส่วนบุคคล และ secret</p></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <span class="mark"><span class="dots" aria-hidden="true"><i style="background:var(--sky)"></i><i style="background:var(--teal)"></i><i style="background:var(--violet)"></i><i style="background:var(--pink)"></i><i style="background:var(--amber)"></i></span>Sapha</span>
+    <span>ที่มา: <code>SPEC.md</code> ร่าง v0.1 และผลวัดใน <code>docs/bench</code></span>
+    <span>17 ต.ค. 2026 · ข้อเสนอที่ยังไม่ได้เคาะ</span>
+  </div>
+</footer>
+</body>
+</html>
